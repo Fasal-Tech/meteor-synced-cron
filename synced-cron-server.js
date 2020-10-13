@@ -191,11 +191,12 @@ SyncedCron.add = function(entry) {
 // Start processing added jobs
 SyncedCron.start = function() {
   var self = this;
+  var options = this.options || {};
 
   Meteor.startup(function() {
     // Schedule each job with later.js
     _.each(self._entries, function(entry) {
-      scheduleEntry(entry);
+      scheduleEntry( entry, options.beforeStart, options.afterComplete );
     });
 
     self.running = true;
@@ -262,7 +263,7 @@ SyncedCron._setTimezone = function(timezone, entry) {
 
 // The meat of our logic. Checks if the specified has already run. If not,
 // records that it's running the job, runs it, and records the output
-SyncedCron._entryWrapper = function(entry) {
+SyncedCron._entryWrapper = function( entry, beforeStart, afterComplete ) {
   var self = this;
 
   return function(intendedAt) {
@@ -290,7 +291,7 @@ SyncedCron._entryWrapper = function(entry) {
     // run and record the job
     try {
       log.info('Starting "' + entry.name + '".');
-      entry.beforeStart && check(entry.beforeStart, Function) && entry.beforeStart();
+      beforeStart && check(beforeStart, Function) && beforeStart();
       var output = entry.job.call(entry.context, intendedAt); // <- Run the actual job
 
       log.info('Finished "' + entry.name + '".');
@@ -310,7 +311,7 @@ SyncedCron._entryWrapper = function(entry) {
       });
     }
     finally{
-      entry.afterComplete && check(entry.afterComplete, Function) && entry.afterComplete();
+      afterComplete && check(afterComplete, Function) && afterComplete();
     }
   };
 }
