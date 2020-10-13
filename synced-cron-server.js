@@ -290,6 +290,7 @@ SyncedCron._entryWrapper = function(entry) {
     // run and record the job
     try {
       log.info('Starting "' + entry.name + '".');
+      entry.beforeStart && check(entry.beforeStart, Function) && entry.beforeStart();
       var output = entry.job.call(entry.context, intendedAt); // <- Run the actual job
 
       log.info('Finished "' + entry.name + '".');
@@ -307,6 +308,9 @@ SyncedCron._entryWrapper = function(entry) {
           error: e.stack
         }
       });
+    }
+    finally{
+      entry.afterComplete && check(entry.afterComplete, Function) && entry.afterComplete();
     }
   };
 }

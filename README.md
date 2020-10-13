@@ -23,6 +23,14 @@ SyncedCron.add({
   context: {
     userID: 'xyz'
   },
+  // Optionally execute some code ( eg. performance monitoring ) before the job starts
+  beforeStart: function(){
+
+  },
+  // Optionally execute some code after the job completes
+  afterComplete: function(){
+
+  },
   schedule: function(parser) {
     this.magic = true // Context is accesible here as this context.
     // parser is a later.parse object
