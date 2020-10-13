@@ -288,13 +288,13 @@ SyncedCron._entryWrapper = function( entry, beforeStart, afterComplete ) {
 
       throw e;
     };
-
+    
+    let startTime = new Date();
     // run and record the job
     try {
       log.info('Starting "' + entry.name + '".');
-
       if( beforeStart && typeof beforeStart === 'function'){
-        beforeStart({ name: entry.name });
+        beforeStart({ name: entry.name, startTime: startTime });
       }
 
       var output = entry.job.call(entry.context, intendedAt); // <- Run the actual job
@@ -317,7 +317,7 @@ SyncedCron._entryWrapper = function( entry, beforeStart, afterComplete ) {
     }
     finally{
       if( afterComplete && typeof afterComplete === 'function'){
-        afterComplete({ name: entry.name });
+        afterComplete({ name: entry.name, startTime: startTime, endTime: new Date() });
       }
     }
   };
