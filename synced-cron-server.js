@@ -150,7 +150,7 @@ Meteor.startup(function() {
   }
 });
 
-var scheduleEntry = function(entry) {
+var scheduleEntry = function(entry, beforeStart, afterComplete) {
   if (!entry.timezone) {
     entry.timezone = SyncedCron.options.timezone || 'utc';
   }
@@ -158,7 +158,7 @@ var scheduleEntry = function(entry) {
   SyncedCron._setTimezone(entry.timezone, entry);
   var schedule = entry.schedule.call(entry.context, Later.parse);
   var scheduleOffset = entry.scheduleOffset || 0;
-  entry._timer = SyncedCron._laterSetInterval(SyncedCron._entryWrapper(entry), schedule, entry.timezone, scheduleOffset);
+  entry._timer = SyncedCron._laterSetInterval(SyncedCron._entryWrapper(entry, beforeStart, afterComplete), schedule, entry.timezone, scheduleOffset);
 
   log.info('Scheduled "' + entry.name + '" next run @'
     + new Date(Later.schedule(schedule).next(1).getTime() + scheduleOffset));
@@ -176,6 +176,7 @@ SyncedCron.add = function(entry) {
   check(entry.job, Function);
   entry.context = typeof entry.context === 'object' ? entry.context : {};
   entry.timezone = typeof entry.timezone === 'string' || typeof entry.timezone === 'function' ? entry.timezone : null;
+  var options = this.options || {};
 
   // check
   if (!this._entries[entry.name]) {
@@ -183,7 +184,7 @@ SyncedCron.add = function(entry) {
 
     // If cron is already running, start directly.
     if (this.running) {
-      scheduleEntry(entry);
+      scheduleEntry(entry, options.beforeStart, options.afterComplete);
     }
   }
 }
@@ -291,7 +292,11 @@ SyncedCron._entryWrapper = function( entry, beforeStart, afterComplete ) {
     // run and record the job
     try {
       log.info('Starting "' + entry.name + '".');
-      beforeStart && check(beforeStart, Function) && beforeStart({ name: entry.name });
+
+      if( beforeStart && typeof beforeStart === 'function'){
+        beforeStart({ name: entry.name });
+      }
+
       var output = entry.job.call(entry.context, intendedAt); // <- Run the actual job
 
       log.info('Finished "' + entry.name + '".');
@@ -311,7 +316,9 @@ SyncedCron._entryWrapper = function( entry, beforeStart, afterComplete ) {
       });
     }
     finally{
-      afterComplete && check(afterComplete, Function) && afterComplete({ name: entry.name });
+      if( afterComplete && typeof afterComplete === 'function'){
+        afterComplete({ name: entry.name });
+      }
     }
   };
 }
