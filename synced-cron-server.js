@@ -291,7 +291,7 @@ SyncedCron._entryWrapper = function( entry, beforeStart, afterComplete ) {
     // run and record the job
     try {
       log.info('Starting "' + entry.name + '".');
-      beforeStart && check(beforeStart, Function) && beforeStart();
+      beforeStart && check(beforeStart, Function) && beforeStart({ name: entry.name });
       var output = entry.job.call(entry.context, intendedAt); // <- Run the actual job
 
       log.info('Finished "' + entry.name + '".');
@@ -311,7 +311,7 @@ SyncedCron._entryWrapper = function( entry, beforeStart, afterComplete ) {
       });
     }
     finally{
-      afterComplete && check(afterComplete, Function) && afterComplete();
+      afterComplete && check(afterComplete, Function) && afterComplete({ name: entry.name });
     }
   };
 }
